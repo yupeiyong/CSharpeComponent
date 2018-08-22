@@ -41,6 +41,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IAuth.cs" />
+    <Compile Include="IAuthFactory.cs" />
+    <Compile Include="IAuthFilter.cs" />
+    <Compile Include="IAuthProvider.cs" />
     <Compile Include="IRoleAuth.cs" />
     <Compile Include="IUserInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
