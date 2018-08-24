@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
-using System.Web.Helpers;
 using System.Web.Mvc;
 
 
@@ -60,7 +59,7 @@ namespace CSharpeComponents.Auth
             throw new NotImplementedException();
         }
         // 权限信息
-        private class AuthInfo
+        public class AuthInfo
         {
             Object authId;          // 权限标识
             Regex pattern;    // url正则表达式解析后的模式
@@ -113,31 +112,31 @@ namespace CSharpeComponents.Auth
                 }
 
             }
-            object[] actionFilter = filterContext.ActionDescriptor.GetCustomAttributes(typeof(UnAuthorize), false);
-            if (actionFilter.Length == 1)
-                return;
-            var controllerName = filterContext.RouteData.Values["controller"].ToString().ToLower();
-            var actionName = filterContext.RouteData.Values["action"].ToString().ToLower();
-            if (CurrentManager.AdminPrivileges == null || CurrentManager.AdminPrivileges.Count == 0 || !AdminPermission.CheckPermissions(CurrentManager.AdminPrivileges, controllerName, actionName))
-            {
-                if (IsAjax())
-                {
-                    Result result = new Result();
-                    result.msg = "你没有访问的权限！";
-                    result.success = false;
-                    filterContext.Result = Json(result);
-                    return;
-                }
-                else
-                {
-                    //跳转到错误页
-                    var result = new ViewResult() { ViewName = "NoAccess" };
-                    result.TempData.Add("Message", "你没有权限访问此页面");
-                    result.TempData.Add("Title", "你没有权限访问此页面！");
-                    filterContext.Result = result;
-                    return;
-                }
-            }
+            //object[] actionFilter = filterContext.ActionDescriptor.GetCustomAttributes(typeof(UnAuthorize), false);
+            //if (actionFilter.Length == 1)
+            //    return;
+            //var controllerName = filterContext.RouteData.Values["controller"].ToString().ToLower();
+            //var actionName = filterContext.RouteData.Values["action"].ToString().ToLower();
+            //if (CurrentManager.AdminPrivileges == null || CurrentManager.AdminPrivileges.Count == 0 || !AdminPermission.CheckPermissions(CurrentManager.AdminPrivileges, controllerName, actionName))
+            //{
+            //    if (IsAjax())
+            //    {
+            //        Result result = new Result();
+            //        result.msg = "你没有访问的权限！";
+            //        result.success = false;
+            //        filterContext.Result = Json(result);
+            //        return;
+            //    }
+            //    else
+            //    {
+            //        //跳转到错误页
+            //        var result = new ViewResult() { ViewName = "NoAccess" };
+            //        result.TempData.Add("Message", "你没有权限访问此页面");
+            //        result.TempData.Add("Title", "你没有权限访问此页面！");
+            //        filterContext.Result = result;
+            //        return;
+            //    }
+            //}
         }
 
 
@@ -203,25 +202,46 @@ namespace CSharpeComponents.Auth
             if (roleAuths != null)
             {
                 // 2. 将每个角色包含的权限Id解析出来
-                Dictionary<object, Set> roleMap = parseRoleAuths(roleAuths);
+                Dictionary<object, List<AuthInfo>> roleMap = ParseRoleAuths(roleAuths);
 
-                // 3. 根据AuthId查找AuthInfo，组成链表，放入roles中
-                Set<Map.Entry<object, Set>> entrySet = roleMap.entrySet();
-                for (Map.Entry<object, Set> entry : entrySet)
-                {
-                    Set authIdSet = entry.getValue();
-                    List<AuthInfo> authInfoList = new ArrayList<AuthInfo>();
-                    for (Object authId : authIdSet)
-                    {
-                        authInfoList.add(auths.get(authId));
-                    }
+                //// 3. 根据AuthId查找AuthInfo，组成链表，放入roles中
+                //Set<Map.Entry<object, Set>> entrySet = roleMap.entrySet();
+                //for (Map.Entry<object, Set> entry : entrySet)
+                //{
+                //    Set authIdSet = entry.getValue();
+                //    List<AuthInfo> authInfoList = new ArrayList<AuthInfo>();
+                //    for (Object authId : authIdSet)
+                //    {
+                //        authInfoList.add(auths.get(authId));
+                //    }
 
-                    Object roleId = entry.getKey();
-                    roleAuthMap.put(roleId, authInfoList);
-                }
+                //    Object roleId = entry.getKey();
+                //    roleAuthMap.put(roleId, authInfoList);
+                //}
             }
 
             return roleAuthMap;
+        }
+
+        // 解析IRoleAuth链表，转换为Map，其中RoleId为Key，Set<AuthId>是Value
+        public Dictionary<object, List<AuthInfo>> ParseRoleAuths(List<IRoleAuth> roleAuths)
+        {
+            Dictionary<object, List<AuthInfo>> roleMap = new Dictionary<object, List<AuthInfo>>();
+            foreach (IRoleAuth roleAuth in roleAuths)
+            {
+                var roleId = roleAuth.GetRoleId();
+
+                //Set authIdSet = roleMap.get(roleId);
+                //if (authIdSet == null)
+                //{
+                //    authIdSet = new HashSet();
+                //    getRoleAuths(roleId, roleAuths, authIdSet);
+
+                //    roleMap.put(roleId, authIdSet);
+                //}
+            }
+
+            return roleMap;
         }
     }
 

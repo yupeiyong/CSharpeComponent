@@ -51,6 +51,18 @@ namespace Service
         }
 
 
+        public List<IAuth> GetAuths()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public List<IRoleAuth> GetRoleAuths()
+        {
+            throw new NotImplementedException();
+        }
+
+
         public List<IAuth> GetUserAuths(object userId)
         {
             throw new NotImplementedException();
