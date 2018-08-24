@@ -44,6 +44,14 @@ namespace CSharpeComponents.Auth
         /// <returns></returns>
         string GetAccessDenyPageUrl();
 
+        // 查询应用系统定义的所有权限
+        List<IAuth> GetAuths();
+
+
+        // 查询应用系统定义的角色权限包含关系
+        List<IRoleAuth> GetRoleAuths();
+
+
 
         List<IAuth> GetUserAuths(object userId);
 

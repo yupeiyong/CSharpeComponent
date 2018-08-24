@@ -6,7 +6,7 @@ using System.Web.Mvc;
 
 namespace WebApp.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         public ActionResult Index()
         {
@@ -26,5 +26,6 @@ namespace WebApp.Controllers
 
             return View();
         }
+        
     }
 }
