@@ -7,7 +7,11 @@ using System.Web.Mvc;
 
 namespace CSharpeComponents.Auth
 {
-
+    /// <summary>
+    /// 1、加载系统所有权限
+    /// 2、加载系统所有角色，每一个角色包含了此角色的所有权限，构造数据时，按角色权限标志确定角色树结构
+    /// 3、用户权限，包含用户的权限和用户的角色下的所有权限
+    /// </summary>
     public class AuthFilter : IAuthFilter, IAuthorizationFilter
     {
         //private String contextPath;		// WebApp的虚拟路径
@@ -46,23 +50,99 @@ namespace CSharpeComponents.Auth
 
         public AuthFilter(IAuthProvider provider)
         {
-
+            this._authProvider = provider;
+            loadAuths();
+            loginPageUrl = _authProvider.GetLoginPageUrl();
+            userInfoKey = _authProvider.GetUserInfoKey();
+            denyPageUrl = _authProvider.GetAccessDenyPageUrl();
         }
         public bool CanAccess(object userId, string url)
         {
-            throw new NotImplementedException();
+            // 1. 检查url 是否在DefaultAccessUrls 中
+            foreach (var p in defaultAccessUrls)
+            {
+                if (p.IsMatch(url))
+                {
+                    return true;
+                }
+            }
+
+            // 2. 执行权限检查
+            List<AuthInfo> authInfoList = GetUserAuths(userId);
+            if (authInfoList != null)
+            {
+                foreach (AuthInfo ai in authInfoList)
+                {
+                    if (ai.pattern.IsMatch(url))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
+        // 查询指定用户的权限信息
+        private List<AuthInfo> GetUserAuths(object userId)
+        {
+            List<AuthInfo> authInfoList = null;
+            // 1. 先从缓存中查找
+            if (userAuths.ContainsKey(userId))
+            {
+                authInfoList = userAuths[userId];
+            }
+            if (authInfoList == null)
+            {   // 2. 缓冲中没有，再从AuthProvider 接口获取
+                // 2.1 创建用户的权限集合
+                var authSet = new HashSet<AuthInfo>();
+
+                // 2.2 将用户的直接权限加入集合
+                var userAuthList = _authProvider.GetUserAuths(userId);
+                if (userAuthList != null)
+                {
+                    foreach (object authId in userAuthList)
+                    {
+                        AuthInfo ai = auths[authId];
+                        if (ai != null)
+                        {
+                            authSet.Add(ai);
+                        }
+                    }
+                }
+
+                // 2.3 将用户角色包含的权限加入集合
+                var userRoleList = _authProvider.GetUserRoles(userId);
+                if (userRoleList != null)
+                {
+                    foreach (var roleId in userRoleList)
+                    {
+                        List<AuthInfo> aiList = roles[roleId];
+                        foreach (var authInfo in aiList)
+                        {
+                            authSet.Add(authInfo);
+                        }
+                    }
+                }
+
+                // 2.4 生成权限列表，放入Map中
+                authInfoList = new List<AuthInfo>(authSet);
+                userAuths.Add(userId, authInfoList);
+            }
+
+            // 3. 返回用户的权限列表
+            return authInfoList;
+        }
 
         public void ReloadRoleAuth()
         {
-            throw new NotImplementedException();
+            roles = loadRoleAuths();
         }
         // 权限信息
         public class AuthInfo
         {
-            Object authId;          // 权限标识
-            Regex pattern;    // url正则表达式解析后的模式
+            public object authId;          // 权限标识
+            public Regex pattern;    // url正则表达式解析后的模式
 
             public AuthInfo(Object authId, String url)
             {
@@ -78,6 +158,9 @@ namespace CSharpeComponents.Auth
                 return;
 
             var httpContext = filterContext.HttpContext;
+            if (httpContext == null)
+                return;
+
             string urlStr = null;
             if (httpContext != null)
             {
@@ -86,57 +169,65 @@ namespace CSharpeComponents.Auth
             }
             object userId = null;
             var session = httpContext.Session;
-
             var userInfo = session[_authProvider.GetUserInfoKey()] as IUserInfo;
 
-            if (userInfo == null)
+            // 3. 判断是否为FreeAccessUrl
+            if (isFreeAccessUrl(urlStr))
             {
-                if (IsAjax())
-                {
-                    JsonResult jsonResult = new JsonResult();
-                    Result result = new Result
-                    {
-                        msg = "登录超时,请重新登录！",
-                        success = false
-                    };
-                    jsonResult.Data = result;
-                    filterContext.Result = jsonResult;
-                    return;
-                }
-                else
-                {
-                    var result = (ActionResult)new RedirectResult("");
-                    filterContext.Result = result;
-                    return;
-                    //跳转到登录页
-                }
+                if (userId != null && userInfo == null)
+                {   // 用户Logout
+                    userAuths.Remove(userId);   // 清除用户的权限数据
 
+                    if (IsAjax())
+                    {
+                        JsonResult jsonResult = new JsonResult();
+                        Result result = new Result
+                        {
+                            msg = "登录超时,请重新登录！",
+                            success = false
+                        };
+                        jsonResult.Data = result;
+                        filterContext.Result = jsonResult;
+                        return;
+                    }
+                    else
+                    {
+                        var result = (ActionResult)new RedirectResult(loginPageUrl);
+                        filterContext.Result = result;
+                        return;
+                        //跳转到登录页
+                    }
+                }
+                else if (userId == null && userInfo != null)
+                {   // 用户Login
+                    userId = userInfo.GetUserId();
+                    GetUserAuths(userId);       // 加载用户的权限数据
+                }
+                return;
             }
-            //object[] actionFilter = filterContext.ActionDescriptor.GetCustomAttributes(typeof(UnAuthorize), false);
-            //if (actionFilter.Length == 1)
-            //    return;
-            //var controllerName = filterContext.RouteData.Values["controller"].ToString().ToLower();
-            //var actionName = filterContext.RouteData.Values["action"].ToString().ToLower();
-            //if (CurrentManager.AdminPrivileges == null || CurrentManager.AdminPrivileges.Count == 0 || !AdminPermission.CheckPermissions(CurrentManager.AdminPrivileges, controllerName, actionName))
-            //{
-            //    if (IsAjax())
-            //    {
-            //        Result result = new Result();
-            //        result.msg = "你没有访问的权限！";
-            //        result.success = false;
-            //        filterContext.Result = Json(result);
-            //        return;
-            //    }
-            //    else
-            //    {
-            //        //跳转到错误页
-            //        var result = new ViewResult() { ViewName = "NoAccess" };
-            //        result.TempData.Add("Message", "你没有权限访问此页面");
-            //        result.TempData.Add("Title", "你没有权限访问此页面！");
-            //        filterContext.Result = result;
-            //        return;
-            //    }
-            //}
+
+            if (CanAccess(userId, urlStr))
+                return;
+
+            if (IsAjax())
+            {
+                JsonResult jsonResult = new JsonResult();
+                Result result = new Result
+                {
+                    msg = "你没有访问的权限！",
+                    success = false
+                };
+                jsonResult.Data = result;
+                filterContext.Result = jsonResult;
+                return;
+            }
+            else
+            {
+                //跳转到错误页
+                var result = (ActionResult)new RedirectResult(denyPageUrl);
+                filterContext.Result = result;
+                return;
+            }
         }
 
 
@@ -155,7 +246,7 @@ namespace CSharpeComponents.Auth
             {
                 foreach (string url in freeUrlList)
                 {
-                    freeAccessUrls.Add(new Regex(url,RegexOptions.Compiled));
+                    freeAccessUrls.Add(new Regex(url, RegexOptions.Compiled));
                 }
             }
 
@@ -172,7 +263,7 @@ namespace CSharpeComponents.Auth
 
             // 3. 获取系统的所有权限,放入auths Map中
             auths.Clear();
-            List <IAuth > authList = _authProvider.GetAuths();
+            List<IAuth> authList = _authProvider.GetAuths();
             if (authList == null || authList.Count < 1)
             {
                 throw new Exception("系统权限为空！");
@@ -180,68 +271,109 @@ namespace CSharpeComponents.Auth
             foreach (IAuth auth in authList)
             {
                 var authId = auth.GetAuthId();
-                String url = auth.GetUrl();
+                string url = auth.GetUrl();
                 AuthInfo ai = new AuthInfo(authId, url);
                 auths.Add(authId, ai);
             }
 
             // 4. 获取系统的所有角色，解析角色包含的所有权限
-            reloadRoleAuths();
+            ReloadRoleAuth();
         }
 
-        public void reloadRoleAuths()
-        {
-            roles = loadRoleAuths();
-        }
 
         private Dictionary<object, List<AuthInfo>> loadRoleAuths()
         {
             Dictionary<object, List<AuthInfo>> roleAuthMap = new Dictionary<object, List<AuthInfo>>();
             // 1. 从AuthProvider 接口查询系统的所有角色权限关系
-            List <IRoleAuth > roleAuths = _authProvider.GetRoleAuths();
+            List<IRoleAuth> roleAuths = _authProvider.GetRoleAuths();
             if (roleAuths != null)
             {
                 // 2. 将每个角色包含的权限Id解析出来
-                Dictionary<object, List<AuthInfo>> roleMap = ParseRoleAuths(roleAuths);
+                Dictionary<object, HashSet<object>> roleMap = ParseRoleAuths(roleAuths);
 
-                //// 3. 根据AuthId查找AuthInfo，组成链表，放入roles中
-                //Set<Map.Entry<object, Set>> entrySet = roleMap.entrySet();
-                //for (Map.Entry<object, Set> entry : entrySet)
-                //{
-                //    Set authIdSet = entry.getValue();
-                //    List<AuthInfo> authInfoList = new ArrayList<AuthInfo>();
-                //    for (Object authId : authIdSet)
-                //    {
-                //        authInfoList.add(auths.get(authId));
-                //    }
-
-                //    Object roleId = entry.getKey();
-                //    roleAuthMap.put(roleId, authInfoList);
-                //}
+                // 3. 根据AuthId查找AuthInfo，组成链表，放入roles中
+                foreach (var roleId in roleMap.Keys)
+                {
+                    HashSet<object> authInfoList = roleMap[roleId];
+                    foreach (var authId in authInfoList)
+                    {
+                        authInfoList.Add(auths[authId]);
+                    }
+                }
             }
 
             return roleAuthMap;
         }
 
         // 解析IRoleAuth链表，转换为Map，其中RoleId为Key，Set<AuthId>是Value
-        public Dictionary<object, List<AuthInfo>> ParseRoleAuths(List<IRoleAuth> roleAuths)
+        public Dictionary<object, HashSet<object>> ParseRoleAuths(List<IRoleAuth> roleAuths)
         {
-            Dictionary<object, List<AuthInfo>> roleMap = new Dictionary<object, List<AuthInfo>>();
+            var roleMap = new Dictionary<object, HashSet<object>>();
             foreach (IRoleAuth roleAuth in roleAuths)
             {
                 var roleId = roleAuth.GetRoleId();
 
-                //Set authIdSet = roleMap.get(roleId);
-                //if (authIdSet == null)
-                //{
-                //    authIdSet = new HashSet();
-                //    getRoleAuths(roleId, roleAuths, authIdSet);
+                HashSet<object> authIdSet = roleMap[roleId];
+                if (authIdSet == null)
+                {
+                    authIdSet = new HashSet<object>();
+                    getRoleAuths(roleId, roleAuths, authIdSet);
 
-                //    roleMap.put(roleId, authIdSet);
-                //}
+                    roleMap.Add(roleId, authIdSet);
+                }
             }
 
             return roleMap;
+        }
+
+        // 将RoleId包含的权限id放入authIdSet中，
+        // 对包含的角色逐级解析出权限，也放入authIdSet中
+        private void getRoleAuths(object roleId, List<IRoleAuth> roleAuths, HashSet<object> authIdSet)
+        {
+            foreach (IRoleAuth roleAuth in roleAuths)
+            {
+                if (roleAuth.GetRoleId() == roleId)
+                {
+                    if (roleAuth.RoleAuthFlag == RoleAuthFlagEnum.Auth)
+                    {
+                        authIdSet.Add(roleAuth.GetAuthId());
+                    }
+                    else
+                    {
+                        getRoleAuths(roleAuth.GetAuthId(), roleAuths, authIdSet);
+                    }
+                }
+            }
+        }
+
+
+        private bool isFreeAccessUrl(string url)
+        {
+            if (isPredefinedUrl(url))
+            {
+                return true;
+            }
+
+            foreach (Regex p in freeAccessUrls)
+            {
+                if (p.IsMatch(url))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool isPredefinedUrl(string url)
+        {
+            if (url.Equals("/") || url.StartsWith("/index.")
+                    || url.StartsWith("/welcome.")
+                    || url.Equals(loginPageUrl) || url.Equals(denyPageUrl))
+            {
+                return true;
+            }
+            return false;
         }
     }
 

@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthFilter.cs" />
+    <Compile Include="RoleAuthEnum.cs" />
     <Compile Include="IAuth.cs" />
     <Compile Include="IAuthFactory.cs" />
     <Compile Include="IAuthFilter.cs" />
