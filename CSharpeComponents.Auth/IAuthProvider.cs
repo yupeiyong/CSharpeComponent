@@ -52,10 +52,9 @@ namespace CSharpeComponents.Auth
         List<IRoleAuth> GetRoleAuths();
 
 
+        List<object> GetUserAuths(object userId);
 
-        List<IAuth> GetUserAuths(object userId);
-
-        List<IRoleAuth> GetUserRoles(object userId);
+        List<object> GetUserRoles(object userId);
 
     }
 

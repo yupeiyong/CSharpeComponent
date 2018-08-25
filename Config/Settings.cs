@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpeComponents.Auth
+namespace Config
 {
-    public enum RoleAuthFlagEnum
+    public class Settings
     {
-        Auth = 0,
-        Role = 1
-        
+        public static string ConnectionString { get; set; } = "DefaultConnection";
     }
 }

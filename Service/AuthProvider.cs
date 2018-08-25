@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using CSharpeComponents.Auth;
-
+using DataAccess;
+using Models;
+using System.Linq;
 
 namespace Service
 {
 
     public class AuthProvider : IAuthProvider
     {
+        public DataDbContext DataDbContext { get; set; }
 
         public IAuthFilter GetAuthFilter()
         {
@@ -23,55 +26,78 @@ namespace Service
 
         public List<string> GetFreeAccessUrls()
         {
-            throw new NotImplementedException();
+            List<String> list = new List<String>();
+            list.Add("/User/Login");
+            list.Add("/User/Logout");
+            list.Add("/Pages/About/.*");
+            return list;
         }
 
 
         public List<string> GetDefaultAccessUrls()
         {
-            throw new NotImplementedException();
+            List<String> list = new List<String>();
+            list.Add("/Pages/[^/]*");
+            //list.add("/pages/[^/]*\\.html");
+            return list;
         }
 
 
         public string GetUserInfoKey()
         {
-            throw new NotImplementedException();
+            return "user_info_key";
         }
 
 
         public string GetLoginPageUrl()
         {
-            throw new NotImplementedException();
+            return "/User/Login";
         }
 
 
         public string GetAccessDenyPageUrl()
         {
-            throw new NotImplementedException();
+            return "/Deny";
         }
 
 
         public List<IAuth> GetAuths()
         {
-            throw new NotImplementedException();
+            return DataDbContext.Set<Auth>().OrderBy(a=>a.Id).ToList<IAuth>();
         }
 
 
         public List<IRoleAuth> GetRoleAuths()
         {
-            throw new NotImplementedException();
+            return DataDbContext.Set<RoleAuth>().OrderBy(ra=>ra.RoleId).ThenBy(ra=>ra.AuthId).ToList<IRoleAuth>();
         }
 
 
-        public List<IAuth> GetUserAuths(object userId)
+        public List<object> GetUserAuths(object userId)
         {
-            throw new NotImplementedException();
+            if (userId == null)
+                return new List<object>();
+
+            long id;
+            if(!long.TryParse(userId.ToString(),out id))
+            {
+                throw new Exception("参数：userId不是长整型数！");
+            }
+            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 0).Select(ua=>(object)ua.AuthId).ToList();
         }
 
 
-        public List<IRoleAuth> GetUserRoles(object userId)
+        public List<object> GetUserRoles(object userId)
         {
-            throw new NotImplementedException();
+            if (userId == null)
+                return new List<object>();
+
+            long id;
+            if (!long.TryParse(userId.ToString(), out id))
+            {
+                throw new Exception("参数：userId不是长整型数！");
+            }
+            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 1).Select(ua => (object)ua.AuthId).ToList();
         }
 
     }
