@@ -92,7 +92,7 @@ namespace CSharpeComponents.Auth
             {
                 authInfoList = userAuths[userId];
             }
-            if (authInfoList == null)
+            if (authInfoList == null || authInfoList.Count == 0)
             {   // 2. 缓冲中没有，再从AuthProvider 接口获取
                 // 2.1 创建用户的权限集合
                 var authSet = new HashSet<AuthInfo>();
@@ -117,17 +117,28 @@ namespace CSharpeComponents.Auth
                 {
                     foreach (var roleId in userRoleList)
                     {
-                        List<AuthInfo> aiList = roles[roleId];
-                        foreach (var authInfo in aiList)
+                        if (roles.ContainsKey(roleId))
                         {
-                            authSet.Add(authInfo);
+                            List<AuthInfo> aiList = roles[roleId];
+                            foreach (var authInfo in aiList)
+                            {
+                                authSet.Add(authInfo);
+                            }
                         }
                     }
                 }
 
                 // 2.4 生成权限列表，放入Map中
                 authInfoList = new List<AuthInfo>(authSet);
-                userAuths.Add(userId, authInfoList);
+                if (userAuths.ContainsKey(userId))
+                {
+                    userAuths[userId] = authInfoList;
+                }
+                else
+                {
+                    userAuths.Add(userId, authInfoList);
+                }
+
             }
 
             // 3. 返回用户的权限列表
@@ -174,38 +185,60 @@ namespace CSharpeComponents.Auth
             // 3. 判断是否为FreeAccessUrl
             if (isFreeAccessUrl(urlStr))
             {
-                if (userId != null && userInfo == null)
-                {   // 用户Logout
-                    userAuths.Remove(userId);   // 清除用户的权限数据
-
-                    if (IsAjax())
-                    {
-                        JsonResult jsonResult = new JsonResult();
-                        Result result = new Result
-                        {
-                            msg = "登录超时,请重新登录！",
-                            success = false
-                        };
-                        jsonResult.Data = result;
-                        filterContext.Result = jsonResult;
-                        return;
-                    }
-                    else
-                    {
-                        var result = (ActionResult)new RedirectResult(loginPageUrl);
-                        filterContext.Result = result;
-                        return;
-                        //跳转到登录页
-                    }
-                }
-                else if (userId == null && userInfo != null)
-                {   // 用户Login
-                    userId = userInfo.GetUserId();
-                    GetUserAuths(userId);       // 加载用户的权限数据
-                }
                 return;
             }
 
+            if (userId == null && userInfo == null)
+            {
+                if (IsAjax())
+                {
+                    JsonResult jsonResult = new JsonResult();
+                    Result result = new Result
+                    {
+                        msg = "登录超时,请重新登录！",
+                        success = false
+                    };
+                    jsonResult.Data = result;
+                    filterContext.Result = jsonResult;
+                    return;
+                }
+                else
+                {
+                    var result = (ActionResult)new RedirectResult(loginPageUrl);
+                    filterContext.Result = result;
+                    return;
+                    //跳转到登录页
+                }
+            }
+            else if (userId != null && userInfo == null)
+            {   // 用户Logout
+                userAuths.Remove(userId);   // 清除用户的权限数据
+
+                if (IsAjax())
+                {
+                    JsonResult jsonResult = new JsonResult();
+                    Result result = new Result
+                    {
+                        msg = "登录超时,请重新登录！",
+                        success = false
+                    };
+                    jsonResult.Data = result;
+                    filterContext.Result = jsonResult;
+                    return;
+                }
+                else
+                {
+                    var result = (ActionResult)new RedirectResult(loginPageUrl);
+                    filterContext.Result = result;
+                    return;
+                    //跳转到登录页
+                }
+            }
+            else if (userId == null && userInfo != null)
+            {   // 用户Login
+                userId = userInfo.GetUserId();
+                GetUserAuths(userId);       // 加载用户的权限数据
+            }
             if (CanAccess(userId, urlStr))
                 return;
 
@@ -295,10 +328,12 @@ namespace CSharpeComponents.Auth
                 foreach (var roleId in roleMap.Keys)
                 {
                     HashSet<object> authInfoList = roleMap[roleId];
+                    var authList = new List<AuthInfo>();
                     foreach (var authId in authInfoList)
                     {
-                        authInfoList.Add(auths[authId]);
+                        authList.Add(auths[authId]);
                     }
+                    roleAuthMap.Add(roleId, authList);
                 }
             }
 
@@ -331,7 +366,7 @@ namespace CSharpeComponents.Auth
         {
             foreach (IRoleAuth roleAuth in roleAuths)
             {
-                if (roleAuth.GetRoleId() == roleId)
+                if (roleAuth.GetRoleId().Equals(roleId))
                 {
                     if (roleAuth.RoleAuthFlag == (int)RoleAuthFlagEnum.Auth)
                     {

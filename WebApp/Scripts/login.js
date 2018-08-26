@@ -13,13 +13,13 @@ $(function () {
         $(this).attr('disabled', 'disabled');
         var $this = $(this);
         var url = $this.data('url');
-        var accountName = $("input[name='AccountName']").val();
-        var password = $("input[name='Password']").val();
+        var accountName = $("input[name='loginName']").val();
+        var password = $("input[name='password']").val();
         //var securityCode = $("input[name='SecurityCode']").val();
 
         var formData = {
-            AccountName: accountName,
-            Password: password,
+            loginName: accountName,
+            password: password,
             //SecurityCode: securityCode
         };
         $.ajax({

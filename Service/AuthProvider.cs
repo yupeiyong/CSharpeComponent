@@ -83,7 +83,7 @@ namespace Service
             {
                 throw new Exception("参数：userId不是长整型数！");
             }
-            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 0).Select(ua=>(object)ua.AuthId).ToList();
+            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 0).Select(ua => ua.AuthId).ToList().Select(item => (object)item).ToList();
         }
 
 
@@ -97,9 +97,7 @@ namespace Service
             {
                 throw new Exception("参数：userId不是长整型数！");
             }
-            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 1).Select(ua => (object)ua.AuthId).ToList();
+            return DataDbContext.Set<UserAuth>().Where(ua => ua.UserId == id && ua.RoleAuthFlag == 1).Select(ua => ua.AuthId).ToList().Select(item => (object)item).ToList();
         }
-
     }
-
 }

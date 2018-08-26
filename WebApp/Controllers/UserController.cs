@@ -35,8 +35,9 @@ namespace TelemarketingManagement.Controllers
                     Title = "用户登录",
                     Message = "登录成功！",
                     Success = true,
-                    RedirectUrl = "/SystemManage/Home"
+                    RedirectUrl = "/Pages/Index"
                 };
+                Session["user_info_key"] = userInfo;
                 return Json(result, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
