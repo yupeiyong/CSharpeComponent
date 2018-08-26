@@ -15,8 +15,6 @@
     <meta http-equiv="pragma" content="Pragma">
     <meta http-equiv="cache-control" content="public">
 
-    <script src="~/Lib/JQuery/2.2.4/jquery.min.js"></script>
-
     <link href="~/Lib/BootStrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/Lib/BootStrap/3.3.7/css/bootstrap-theme.min.css" rel="stylesheet" />
     <link href="~/Lib/FontAwesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
@@ -24,28 +22,31 @@
     <link href="~/Lib/BootStrapDialog/1.35.2/css/bootstrap-dialog.min.css" rel="stylesheet" />
     <link href="~/Lib/BootStrapTable/1.11.0/bootstrap-table.min.css" rel="stylesheet" />
 
+    <link href="~/Areas/SystemManage/Content/jquery.mmenu.css" rel="stylesheet" />
+
     <link href="~/Content/Themes/style.css" rel="stylesheet" />
+    <link href="~/Content/Themes/common.css" rel="stylesheet" />
 
-    <script src="~/Scripts/Commons.js"></script>
-
+    <script src="~/Lib/JQuery/2.2.4/jquery.min.js"></script>
     <!--引入子页面的样式-->
     @RenderSection("css", false)
-
 </head>
-
-
 <body>
+
     @{
-        Html.RenderPartial("~/Views/Shared/PartialHeader.cshtml");
+        Html.RenderPartial("~/Views/Shared/HeaderPartialForAdmin.cshtml");
     }
     <div class="container-fluid content">
         <div class="row">
-            <div class="main">
+            @*@{
+        Html.RenderPartial("~/Areas/SystemManage/Views/Shared/Menu.cshtml");
+    }*@
+            <div class="main ">
                 @RenderBody()
             </div>
             <div id="footer">
                 @{
-                    Html.RenderPartial("~/Views/Shared/PartialFooter.cshtml");
+                    Html.RenderPartial("~/Views/Shared/FooterPartialForAdmin.cshtml");
                 }
             </div>
         </div>
@@ -60,12 +61,15 @@
     <script src="~/Lib/JQueryValidate/1.15.0/jquery.validate.min.js"></script>
 
     <script src="~/Lib/bootstrap-table-extend.js"></script>
+    <script src="~/Lib/Commons.js"></script>
+
+    <script src="~/Areas/SystemManage/Scripts/core.min.js"></script>
+    <script src="~/Areas/SystemManage/Scripts/jquery.mmenu.min.js"></script>
+    <script src="~/Areas/SystemManage/Scripts/index.js"></script>
 
     <!--加载子页面的js-->
-@RenderSection("scripts", false)
+    @RenderSection("scripts", false)
 
 
 </body>
-
 </html>
-

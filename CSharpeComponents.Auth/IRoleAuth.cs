@@ -3,7 +3,7 @@
 
     public interface IRoleAuth
     {
-        RoleAuthFlagEnum RoleAuthFlag { get; set; }
+        int RoleAuthFlag { get; set; }
 
         object GetRoleId();
 

@@ -8,9 +8,9 @@ namespace Models
 {
     public class Role : BaseModel
     {
-        public String RroleName;
+        public String RoleName { get; set; }
 
         // 权限说明
-        public String RoleMemo;
+        public String RoleMemo { get; set; }
     }
 }

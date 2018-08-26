@@ -13,7 +13,7 @@ namespace Models
 
         public long AuthId { get; set; }
 
-        public RoleAuthFlagEnum RoleAuthFlag { get; set; }
+        public int RoleAuthFlag { get; set; }
 
         public object GetAuthId()
         {

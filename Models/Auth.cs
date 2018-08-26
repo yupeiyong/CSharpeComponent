@@ -21,12 +21,12 @@ namespace Models
         }
 
         // 权限名称
-        public string AuthName;
+        public string AuthName { get; set; }
 
         // URL或者内容权限URI
-        public string AuthUrl;
+        public string AuthUrl { get; set; }
 
         // 权限说明
-        public string AuthMemo;
+        public string AuthMemo { get; set; }
     }
 }

@@ -334,7 +334,7 @@ namespace CSharpeComponents.Auth
             {
                 if (roleAuth.GetRoleId() == roleId)
                 {
-                    if (roleAuth.RoleAuthFlag == RoleAuthFlagEnum.Auth)
+                    if (roleAuth.RoleAuthFlag == (int)RoleAuthFlagEnum.Auth)
                     {
                         authIdSet.Add(roleAuth.GetAuthId());
                     }

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 
-namespace WebApp.Controllers
+namespace TelemarketingManagement.Controllers
 {
-    public class HomeController : BaseController
+    public class HomeController : Controller
     {
         public ActionResult Index()
         {
@@ -26,6 +26,5 @@ namespace WebApp.Controllers
 
             return View();
         }
-        
     }
 }

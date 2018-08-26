@@ -16,7 +16,7 @@ namespace WebApp.Base
         {
             var builder = new ContainerBuilder();
 
-            var assemblyNames = new[] { "CSharpeComponents.", "DataAccess", "Service", "WebApp" };
+            var assemblyNames = new[] { "CSharpeComponents.Auth", "DataAccess", "Service", "WebApp" };
             var assemblies = assemblyNames.Select(a => Assembly.Load(a)).ToList();
             //var types = AppDomain.CurrentDomain
             //    .GetAssemblies()

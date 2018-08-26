@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="AuthProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CSharpeComponents.Auth\CSharpeComponents.Auth.csproj">
