@@ -29,7 +29,7 @@ namespace Service
             List<String> list = new List<String>();
             list.Add("/User/Login");
             list.Add("/User/Logout");
-            list.Add("/Pages/About/.*");
+            list.Add("/Pages/.*");
             return list;
         }
 

@@ -2,7 +2,8 @@
 using System.Web.Mvc;
 using CSharpeComponents.Auth;
 using Service;
-
+using WebApp.Base;
+using Autofac;
 
 namespace WebApp
 {
@@ -10,7 +11,10 @@ namespace WebApp
     {
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
-            filters.Add(new AuthFilter(new AuthProvider()));
+            IContainer Container = ContainerFactory.GetContainer();
+
+            var AuthProvider = Container.Resolve<AuthProvider>();
+            filters.Add(new AuthFilter(AuthProvider));
             filters.Add(new HandleErrorAttribute());
         }
     }

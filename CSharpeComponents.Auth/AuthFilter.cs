@@ -313,10 +313,9 @@ namespace CSharpeComponents.Auth
             {
                 var roleId = roleAuth.GetRoleId();
 
-                HashSet<object> authIdSet = roleMap[roleId];
-                if (authIdSet == null)
+                if (!roleMap.ContainsKey(roleId))
                 {
-                    authIdSet = new HashSet<object>();
+                    var authIdSet = new HashSet<object>();
                     getRoleAuths(roleId, roleAuths, authIdSet);
 
                     roleMap.Add(roleId, authIdSet);
